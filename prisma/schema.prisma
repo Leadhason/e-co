@@ -1,0 +1,300 @@
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  EMPLOYEE
+}
+
+enum ProductStatus {
+  PUBLISHED
+  DRAFT
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model AdminUser {
+  id            String             @id @default(uuid())
+  name          String
+  email         String             @unique
+  passwordHash  String
+  role          Role               @default(EMPLOYEE)
+  isBlocked     Boolean            @default(false)
+  createdAt     DateTime           @default(now())
+  stockAdjusts  StockAdjustment[]
+  statusLogs    OrderStatusLog[]
+  orderNotes    OrderNote[]
+  refunds       Refund[]
+
+  @@map("admin_user")
+}
+
+model StoreSettings {
+  id              String   @id @default(uuid())
+  name            String
+  logoUrl         String?
+  contactEmail    String?
+  contactPhone    String?
+  address         String?
+  currency        String   @default("USD")
+  timezone        String   @default("UTC")
+  taxRate         Float    @default(0)
+  taxInclusive    Boolean  @default(false)
+  codEnabled      Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("category")
+}
+
+model Product {
+  id                 String             @id @default(uuid())
+  categoryId         String
+  category           Category           @relation(fields: [categoryId], references: [id])
+  name               String
+  description        String?
+  basePrice          Float
+  status             ProductStatus      @default(DRAFT)
+  lowStockThreshold  Int                @default(5)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  images             ProductImage[]
+  attributes         VariantAttribute[]
+  variants           ProductVariant[]
+
+  @@map("product")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  url       String
+  position  Int
+  createdAt DateTime @default(now())
+
+  @@map("product_image")
+}
+
+model VariantAttribute {
+  id        String            @id @default(uuid())
+  productId String
+  product   Product           @relation(fields: [productId], references: [id])
+  name      String
+  options   AttributeOption[]
+
+  @@map("variant_attribute")
+}
+
+model AttributeOption {
+  id           String             @id @default(uuid())
+  attributeId  String
+  attribute    VariantAttribute   @relation(fields: [attributeId], references: [id])
+  value        String
+  variantMaps  VariantOptionMap[]
+
+  @@map("attribute_option")
+}
+
+model ProductVariant {
+  id                 String             @id @default(uuid())
+  productId          String
+  product            Product            @relation(fields: [productId], references: [id])
+  sku                String             @unique
+  priceOverride      Float?
+  stockQty           Int                @default(0)
+  lowStockThreshold  Int                @default(5)
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  optionMaps         VariantOptionMap[]
+  stockAdjustments   StockAdjustment[]
+  orderItems         OrderItem[]
+
+  @@map("product_variant")
+}
+
+model VariantOptionMap {
+  id         String          @id @default(uuid())
+  variantId  String
+  variant    ProductVariant  @relation(fields: [variantId], references: [id])
+  optionId   String
+  option     AttributeOption @relation(fields: [optionId], references: [id])
+
+  @@map("variant_option_map")
+}
+
+model StockAdjustment {
+  id             String         @id @default(uuid())
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id])
+  adminId        String
+  admin          AdminUser      @relation(fields: [adminId], references: [id])
+  quantityChange Int
+  reason         String
+  createdAt      DateTime       @default(now())
+
+  @@map("stock_adjustment")
+}
+
+model Customer {
+  id          String            @id @default(uuid())
+  name        String
+  email       String            @unique
+  phone       String?
+  isBlocked   Boolean           @default(false)
+  blockReason String?
+  blockedAt   DateTime?
+  createdAt   DateTime          @default(now())
+  addresses   CustomerAddress[]
+  orders      Order[]
+
+  @@map("customer")
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  line1      String
+  line2      String?
+  city       String
+  region     String
+  isDefault  Boolean  @default(false)
+  orders     Order[]
+
+  @@map("customer_address")
+}
+
+model Order {
+  id             String          @id @default(uuid())
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  addressId      String
+  address        CustomerAddress @relation(fields: [addressId], references: [id])
+  orderNumber    String          @unique
+  status         OrderStatus     @default(PENDING)
+  paymentStatus  PaymentStatus   @default(UNPAID)
+  paymentMethod  String
+  paystackRef    String?
+  subtotal       Float
+  shippingFee    Float
+  discount       Float           @default(0)
+  total          Float
+  createdAt      DateTime        @default(now())
+  items          OrderItem[]
+  statusLogs     OrderStatusLog[]
+  notes          OrderNote[]
+  refunds        Refund[]
+
+  @@map("order")
+}
+
+model OrderItem {
+  id          String          @id @default(uuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id])
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  productName String
+  variantName String
+  sku         String
+  unitPrice   Float
+  quantity    Int
+  subtotal    Float
+
+  @@map("order_item")
+}
+
+model OrderStatusLog {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  adminId   String
+  admin     AdminUser   @relation(fields: [adminId], references: [id])
+  status    OrderStatus
+  createdAt DateTime    @default(now())
+
+  @@map("order_status_log")
+}
+
+model OrderNote {
+  id        String    @id @default(uuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id])
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id])
+  note      String
+  createdAt DateTime  @default(now())
+
+  @@map("order_note")
+}
+
+model Refund {
+  id        String    @id @default(uuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id])
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id])
+  amount    Float
+  reason    String
+  createdAt DateTime  @default(now())
+
+  @@map("refund")
+}
+
+model ShippingZone {
+  id            String               @id @default(uuid())
+  name          String
+  flatRate      Float
+  freeThreshold Float?
+  codEnabled    Boolean              @default(false)
+  regions       ShippingZoneRegion[]
+
+  @@map("shipping_zone")
+}
+
+model ShippingZoneRegion {
+  id         String       @id @default(uuid())
+  zoneId     String
+  zone       ShippingZone @relation(fields: [zoneId], references: [id])
+  regionName String
+
+  @@map("shipping_zone_region")
+}
+
+model NotificationSetting {
+  id             String  @id @default(uuid())
+  event          String  @unique
+  isEnabled      Boolean @default(true)
+  recipientEmail String?
+
+  @@map("notification_setting")
+}
