@@ -35,17 +35,16 @@ export default async function ProductDetailPage({
   return (
     <div className="p-[24px] md:p-[32px] w-full max-w-[1200px] mx-auto flex flex-col gap-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col gap-3">
           <Link
             href="/products"
-            className="flex items-center gap-1.5 text-[12px] text-text-secondary hover:text-text-primary transition-colors"
+            className="flex items-center gap-1.5 px-[10px] h-[30px] bg-bg-secondary border border-border-default rounded-[7px] text-[12px] text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all w-fit"
           >
-            <IconArrowLeft size={14} stroke={1.5} aria-hidden="true" />
-            Products
+            <IconArrowLeft size={14} stroke={2} aria-hidden="true" />
+            Back to Products
           </Link>
-          <span className="text-border-strong text-[12px]">/</span>
-          <span className="text-[12px] text-text-primary truncate max-w-[260px]">
+          <span className="text-[14px] font-medium text-text-primary truncate max-w-[400px]">
             {product.name}
           </span>
         </div>
@@ -60,6 +59,7 @@ export default async function ProductDetailPage({
           </Link>
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT COLUMN — Images + Variants */}

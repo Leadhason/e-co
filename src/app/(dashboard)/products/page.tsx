@@ -5,8 +5,10 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const products = await getProducts();
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const [products, categories] = await Promise.all([
+    getProducts(),
+    prisma.category.findMany({ orderBy: { name: "asc" } })
+  ]);
 
   return (
     <div className="p-[24px] md:p-[32px] w-full max-w-[1200px] mx-auto flex flex-col h-full">

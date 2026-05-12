@@ -11,7 +11,8 @@ import {
   IconChevronDown, 
   IconTrash,
   IconCheck,
-  IconX
+  IconX,
+  IconFileSpreadsheet
 } from "@tabler/icons-react";
 import { 
   archiveProduct, 
@@ -20,6 +21,7 @@ import {
   bulkDeleteProducts 
 } from "@/actions/products";
 import Image from "next/image";
+import { ImportModal } from "@/components/products/import-modal";
 
 type SortOption = "NAME" | "PRICE" | "DATE" | "STOCK";
 type SortOrder = "asc" | "desc";
@@ -36,6 +38,8 @@ export function ProductList({ initialProducts, categories = [] }: { initialProdu
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(20);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+
 
   // Reset infinite scroll when filters change
   useEffect(() => {
@@ -208,14 +212,33 @@ export function ProductList({ initialProducts, categories = [] }: { initialProdu
         </div>
 
         {/* Global CTA */}
-        <Link 
-          href="/products/new"
-          className="flex items-center gap-[6px] px-[12px] h-[32px] bg-cta-bg text-cta-text rounded-[7px] text-[12px] font-medium hover:bg-cta-hover active:scale-[0.99] transition-all"
-        >
-          <IconPlus size={14} />
-          Add Product
-        </Link>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-[6px] px-[12px] h-[32px] bg-transparent border border-border-default text-text-secondary rounded-[7px] text-[12px] font-medium hover:border-text-hint hover:text-text-primary transition-all"
+          >
+            <IconFileSpreadsheet size={14} />
+            Import CSV
+          </button>
+          <Link 
+            href="/products/new"
+            className="flex items-center gap-[6px] px-[12px] h-[32px] bg-cta-bg text-cta-text rounded-[7px] text-[12px] font-medium hover:bg-cta-hover active:scale-[0.99] transition-all"
+          >
+            <IconPlus size={14} />
+            Add Product
+          </Link>
+        </div>
       </div>
+
+      {isImportOpen && (
+        <ImportModal 
+          onClose={() => setIsImportOpen(false)} 
+          onSuccess={() => {
+            // Success logic if needed, already revalidates via server action
+          }} 
+        />
+      )}
+
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (

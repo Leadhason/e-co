@@ -437,29 +437,36 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getProduct(id: string) {
-  return await prisma.product.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      images: { orderBy: { position: "asc" } },
-      attributes: {
-        include: { options: true },
-      },
-      variants: {
-        include: {
-          optionMaps: {
-            include: {
-              option: {
-                include: { attribute: true },
+  // We fetch the core product and its related arrays in parallel to avoid sequential roundtrips
+  const [product, categories] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        images: { orderBy: { position: "asc" } },
+        attributes: {
+          include: { options: true },
+        },
+        variants: {
+          include: {
+            optionMaps: {
+              include: {
+                option: {
+                  include: { attribute: true },
+                },
               },
             },
           },
+          orderBy: { createdAt: "asc" },
         },
-        orderBy: { createdAt: "asc" },
       },
-    },
-  });
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } })
+  ]);
+
+  return product;
 }
+
 
 export async function updateProductStatus(id: string, status: "PUBLISHED" | "DRAFT" | "ARCHIVED") {
   try {

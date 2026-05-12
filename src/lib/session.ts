@@ -1,6 +1,8 @@
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { Role } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+
 
 const secretKey = process.env.SESSION_SECRET;
 const key = new TextEncoder().encode(secretKey);
@@ -45,7 +47,7 @@ export async function createSession(userId: string, role: Role, rememberMe: bool
   });
 }
 
-export async function verifySession() {
+export async function verifySession(checkDb = true) {
   const cookieStore = await cookies();
   const cookie = cookieStore.get("session")?.value;
   const session = await decrypt(cookie);
@@ -54,8 +56,28 @@ export async function verifySession() {
     return { isAuth: false };
   }
 
+  if (checkDb) {
+    try {
+      const user = await prisma.adminUser.findUnique({
+        where: { id: session.userId },
+        select: { isBlocked: true }
+      });
+
+      if (!user || user.isBlocked) {
+        return { isAuth: false };
+      }
+    } catch (error) {
+      console.error("Database session verification failed:", error);
+      // Fail secure in production if DB is down, or proceed if preferred
+      // For now, we fail secure.
+      return { isAuth: false };
+    }
+  }
+
   return { isAuth: true, userId: session.userId, role: session.role };
 }
+
+
 
 export async function deleteSession() {
   const cookieStore = await cookies();
