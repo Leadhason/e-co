@@ -1,40 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import { IconUpload, IconX, IconPhoto } from "@tabler/icons-react";
 
-export type ImageAsset = {
-  id: string; // uuid for new files, or the database ID for existing ones
-  url: string; // object URL or absolute URL
-  file?: File; // undefined if it is a pre-existing image fetched from the DB
-  isExisting?: boolean; // flag to easily know if it's already in DB
-};
-
-export function ImageUploader({
-  images,
-  onChange,
-}: {
-  images: ImageAsset[];
-  onChange: (newImages: ImageAsset[]) => void;
-}) {
+export function ImageUploader() {
+  const [images, setImages] = useState<{ id: string; url: string; file?: File }[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       processFiles(Array.from(e.target.files));
-      // reset the input so you can select the same file again if deleted
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const processFiles = (files: File[]) => {
     const newImages = files.map((file) => ({
       id: crypto.randomUUID(),
-      url: URL.createObjectURL(file), 
+      url: URL.createObjectURL(file), // temporary local URL for preview
       file,
     }));
-    onChange([...images, ...newImages]);
+    setImages((prev) => [...prev, ...newImages]);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -56,12 +42,13 @@ export function ImageUploader({
   };
 
   const removeImage = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); 
-    onChange(images.filter((img) => img.id !== id));
+    e.stopPropagation(); // prevent triggering upload dialog if button overlaps
+    setImages((prev) => prev.filter((img) => img.id !== id));
   };
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Upload Area */}
       <div 
         onClick={() => fileInputRef.current?.click()}
         onDragOver={handleDragOver}
@@ -92,13 +79,16 @@ export function ImageUploader({
         </p>
       </div>
 
+      {/* Grid of previews */}
       {images.length > 0 && (
         <div className="grid grid-cols-4 gap-4">
           {images.map((img, index) => (
             <div key={img.id} className="relative group aspect-square rounded-[8px] border border-border-default overflow-hidden bg-bg-primary flex items-center justify-center">
+              {/* Image Preview */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
               
+              {/* Remove Button Overlay */}
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   type="button" 
@@ -109,6 +99,7 @@ export function ImageUploader({
                 </button>
               </div>
 
+              {/* Primary Label for first image */}
               {index === 0 && (
                 <div className="absolute bottom-2 left-2 right-2">
                   <div className="bg-bg-primary border border-border-default rounded-[4px] px-2 py-1 flex items-center justify-center gap-1 shadow-sm">
@@ -121,6 +112,10 @@ export function ImageUploader({
           ))}
         </div>
       )}
+      
+      {/* Hidden input to pass image URLs/IDs to form submission if needed, 
+          though file uploads usually require separate multipart handling or 
+          direct-to-s3 hook before main form submission */}
     </div>
   );
 }
