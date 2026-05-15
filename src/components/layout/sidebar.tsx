@@ -8,6 +8,7 @@ import {
   IconUsers, 
   IconSettings,
   IconReceipt,
+  IconChart,
   IconChevronDown,
   IconLayoutSidebar
 } from "@tabler/icons-react";
@@ -27,6 +28,7 @@ const navGroups = [
       { name: "Categories", href: "/categories", icon: IconBox },
       { name: "Orders", href: "/orders", icon: IconReceipt },
       { name: "Customers", href: "/customers", icon: IconUsers },
+      { name: "Analytics", href: "/analytics", icon: IconChart },
     ]
   }
 ];
