@@ -25,29 +25,22 @@ model AdminUser {
   @@map("admin_user")
 }
 
-model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  email     String
-  expiresAt DateTime
 
-  @@map("password_reset_token")
-}
 
 model StoreSettings {
 
-  id           String   @id @default(uuid())
-  name         String
-  logoUrl      String?
-  contactEmail String?
-  contactPhone String?
-  address      String?
-  currency     String   @default("USD")
-  timezone     String   @default("UTC")
-  taxRate      Float    @default(0)
-  taxInclusive Boolean  @default(false)
-  codEnabled   Boolean  @default(false)
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  name                String
+  logoUrl             String?
+  contactEmail        String?
+  contactPhone        String?
+  address             String?
+  currency            String   @default("USD")
+  timezone            String   @default("UTC")
+  taxRate             Float    @default(0)
+  taxInclusive        Boolean  @default(false)
+  codEnabled          Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
 
   @@map("store_settings")
 }
@@ -55,11 +48,15 @@ model StoreSettings {
 model Category {
   id        String    @id @default(uuid())
   name      String    @unique
+  slug      String?   @unique
   createdAt DateTime  @default(now())
   products  Product[]
 
   @@map("category")
 }
+
+
+
 
 model Product {
   id                String             @id @default(uuid())
@@ -262,6 +259,7 @@ model ShippingZone {
   flatRate      Float
   freeThreshold Float?
   codEnabled    Boolean              @default(false)
+  isDefault     Boolean              @default(false)
   regions       ShippingZoneRegion[]
 
   @@map("shipping_zone")
@@ -310,3 +308,15 @@ enum PaymentStatus {
   PAID
   REFUNDED
 }
+
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_token")
+}
+

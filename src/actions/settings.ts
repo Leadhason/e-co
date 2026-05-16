@@ -149,9 +149,6 @@ export async function updatePaymentSettings(formData: FormData) {
   const session = await verifySession();
   if (!session.isAuth) return { error: "Unauthorized" };
 
-  const paystackPublicKey = formData.get("paystackPublicKey") as string;
-  const paystackSecretKey = formData.get("paystackSecretKey") as string;
-  const testMode = formData.get("testMode") === "on";
   const codEnabled = formData.get("codEnabled") === "on";
 
   const settings = await prisma.storeSettings.findFirst();
@@ -159,9 +156,6 @@ export async function updatePaymentSettings(formData: FormData) {
     await prisma.storeSettings.update({
       where: { id: settings.id },
       data: {
-        paystackPublicKey,
-        paystackSecretKey,
-        testMode,
         codEnabled
       }
     });

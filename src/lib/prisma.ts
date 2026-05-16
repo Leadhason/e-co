@@ -31,7 +31,7 @@ export const prisma =
         neonConfig.webSocketConstructor = ws;
       }
       const pool = new Pool({ connectionString: url.trim() });
-      const adapter = new PrismaNeon(pool);
+      const adapter = new PrismaNeon(pool as any);
       return new PrismaClient({ adapter });
     }
 
