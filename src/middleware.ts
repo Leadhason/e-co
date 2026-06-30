@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "./lib/session";
+import { verifySession } from "./lib/session.edge";
 
 // Define route categories
 const publicRoutes = ["/login", "/forgot-password", "/reset-password"];
