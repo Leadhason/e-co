@@ -13,7 +13,7 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => path === route || path.startsWith(`${route}/`));
 
   // Verify the session (Edge-compatible check)
-  const session = await verifySession(false);
+  const session = await verifySession();
 
 
   // 1. Redirect unauthenticated users trying to access protected routes
